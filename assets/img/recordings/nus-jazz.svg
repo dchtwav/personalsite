@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <radialGradient id="amberGlow" cx="40%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#2a2015"/>
+      <stop offset="60%" stop-color="#141318"/>
+      <stop offset="100%" stop-color="#0b0b0e"/>
+    </radialGradient>
+    <linearGradient id="goldText" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fde68a"/>
+      <stop offset="50%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#b45309"/>
+    </linearGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(245, 158, 11, 0.4)"/>
+      <stop offset="100%" stop-color="rgba(245, 158, 11, 0.08)"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="500" height="500" fill="url(#amberGlow)" />
+
+  <!-- Subtle Elegant Geometric Inset Frame -->
+  <rect x="24" y="24" width="452" height="452" rx="12" fill="none" stroke="url(#borderGrad)" stroke-width="1.5" />
+  <rect x="36" y="36" width="428" height="428" rx="8" fill="none" stroke="rgba(255, 255, 255, 0.04)" stroke-width="1" />
+
+  <!-- Clean Top Tag -->
+  <text x="250" y="150" 
+        text-anchor="middle" 
+        fill="#9ca3af" 
+        font-family="Outfit, -apple-system, sans-serif" 
+        font-size="16" 
+        font-weight="600" 
+        letter-spacing="5">LIVE SESSION RECORDING</text>
+
+  <!-- Accent Divider Line -->
+  <line x1="200" y1="175" x2="300" y2="175" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" opacity="0.75" />
+
+  <!-- Primary Bold Headline -->
+  <text x="250" y="255" 
+        text-anchor="middle" 
+        fill="url(#goldText)" 
+        font-family="Outfit, -apple-system, sans-serif" 
+        font-size="54" 
+        font-weight="800" 
+        letter-spacing="3">NUS JAZZ</text>
+
+  <!-- Secondary Band Subtitle -->
+  <text x="250" y="305" 
+        text-anchor="middle" 
+        fill="#e2e8f0" 
+        font-family="Inter, -apple-system, sans-serif" 
+        font-size="20" 
+        font-weight="500" 
+        letter-spacing="6">BAND</text>
+
+  <!-- Bottom Year & Genre Pill -->
+  <text x="250" y="380" 
+        text-anchor="middle" 
+        fill="#64748b" 
+        font-family="Inter, -apple-system, sans-serif" 
+        font-size="14" 
+        font-weight="600" 
+        letter-spacing="3">ENSEMBLE TRACKING · 2020</text>
+</svg>

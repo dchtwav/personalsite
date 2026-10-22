@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="page-title">David Chew — Sound Designer & Audio Engineer</title>
+  
+  <meta name="description" content="Portfolio of David Chew: Sound Designer & Audio Engineer specializing in podcasts, game audio, live orchestral captures, and musicals." />
+  <meta name="author" content="David Chew" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+  <!-- Open Graph / Social Sharing Meta -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="David Chew — Sound Designer & Audio Engineer" />
+  <meta property="og:description" content="Immersive soundscapes, clean acoustic recordings, VR game audio, and podcasts." />
+
+  <!-- Modern Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Official SoundCloud Widget API (for in-page audio playback) -->
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+</head>
+<body>
+
+  <!-- Top Sticky Navigation Bar (Mobile Friendly) -->
+  <header class="site-nav" role="banner">
+    <div class="container">
+      <a href="#" class="brand" id="brand-link" aria-label="Home">
+        <span class="brand-dot"></span>
+        <span id="brand-name">David Chew</span>
+      </a>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-links">
+          <li><a href="#podcasts" class="nav-link">Podcasts</a></li>
+          <li><a href="#musicals" class="nav-link">Musicals</a></li>
+          <li><a href="#recordings" class="nav-link">Recordings</a></li>
+          <li><a href="#games" class="nav-link">Games</a></li>
+          <li><a href="#about" class="nav-link">About</a></li>
+          <li><a href="#contact" class="nav-link">Contact</a></li>
+          <li>
+            <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Toggle theme">
+              ☀️ Light
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Landmark -->
+  <main id="main-content">
+    
+    <!-- Hero / Headline Section (Inspiration: fabiomonzani.com + Original Console Background) -->
+    <section class="hero-section" aria-labelledby="hero-title">
+      <div class="container">
+        
+        <!-- Hero Interactive Media Banner with Original Mixing Console Artwork -->
+        <div class="hero-banner">
+          <img src="assets/img/hero-console-bg.jpg" alt="Audio mixing console desk" class="hero-bg-img" />
+          <div class="hero-banner-inner">
+            <span class="hero-status-pill">● Available for Projects & Scoring</span>
+            <h1 class="hero-banner-title">Sound Design · Audio Engineering</h1>
+            <p class="hero-banner-sub">VR Games · Podcasts · Live Orchestral Captures · Musical Theatre</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Podcasts Dedicated Section (Spotify Playlist Shelf style) -->
+    <section id="podcasts" class="podcasts-section" aria-labelledby="podcasts-title">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2 id="podcasts-title" class="section-title">Podcasts</h2>
+            <p class="section-subtitle">Audio Engineering, Sound Design & Dialogue Editing for Narrative Series & Shows</p>
+          </div>
+        </div>
+
+        <!-- Dynamic Grid Container -->
+        <div id="podcasts-grid" class="spotify-shelf-grid">
+          <!-- Hydrated dynamically from SITE_CONFIG.podcastEpisodes via js/main.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Musical Productions Dedicated Section (Spotify Playlist Shelf Style) -->
+    <section id="musicals" class="musicals-section" aria-labelledby="musicals-title">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2 id="musicals-title" class="section-title">Musical Productions</h2>
+            <p class="section-subtitle">Sound Design, Audio Engineering & Live Mixes for Live Musical Productions</p>
+          </div>
+        </div>
+
+        <!-- Spotify-style Grid Container -->
+        <div id="musicals-grid" class="spotify-shelf-grid">
+          <!-- Hydrated dynamically from SITE_CONFIG.musicalProductions via js/main.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Recordings Dedicated Section (Spotify Playlist Shelf style) -->
+    <section id="recordings" class="recordings-section" aria-labelledby="recordings-title">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2 id="recordings-title" class="section-title">Recordings</h2>
+            <p class="section-subtitle">Chamber Ensembles & Acoustic Studio Tracking</p>
+          </div>
+        </div>
+
+        <!-- Spotify-style Grid Container (Same layout as Musicals & Podcasts) -->
+        <div id="recordings-grid" class="spotify-shelf-grid">
+          <!-- Hydrated dynamically from SITE_CONFIG.acousticRecordings via js/main.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Games Section (Virtual Reality & Interactive Audio) -->
+    <section id="games" class="works-section" aria-labelledby="games-title">
+      <div class="container">
+        <div class="section-header">
+          <div>
+            <h2 id="games-title" class="section-title">Games</h2>
+            <p class="section-subtitle">Virtual Reality Audio, Interactive Sound Design & Adaptive Game Music</p>
+          </div>
+        </div>
+
+        <!-- Dynamic Games Grid (Spotify shelf style) hydrated via js/main.js -->
+        <div id="games-grid" class="spotify-shelf-grid">
+          <!-- Hydrated from SITE_CONFIG.games -->
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section" aria-labelledby="about-title">
+      <div class="container">
+        <div class="section-header">
+          <h2 id="about-title" class="section-title">About</h2>
+        </div>
+
+        <div class="about-grid">
+          <div id="about-bio-container" class="bio-text">
+            <!-- Avatar photo & bio paragraphs injected here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer / Contact Section (With Original Console Background) -->
+  <footer id="contact" class="site-footer" role="contentinfo">
+    <img src="assets/img/contact-console-bg.jpg" alt="Studio mixing console" class="footer-bg-img" />
+    <div class="container footer-content">
+      <div class="footer-pitch">
+        <h2>Have a project in mind? Let's talk.</h2>
+        <p>Feel free to reach out with any questions or ideas. Whether you're working on a podcast, looking for game audio or theatre sound, or need an acoustic session recorded, I'm always happy to connect.</p>
+      </div>
+
+      <div class="contact-action-bar">
+        <a id="contact-email-btn" href="#" class="btn-primary">
+          Get in touch
+        </a>
+        <a href="#podcasts" class="btn-secondary">
+          Back to Top ↑
+        </a>
+      </div>
+
+      <div class="footer-meta">
+        <p>© <span id="current-year">2026</span> <span id="copyright-name">David Chew</span>. All rights reserved.</p>
+        <ul class="social-links" aria-label="Social Links">
+          <li><a id="social-linkedin" href="https://www.linkedin.com/in/davidcht/" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+  <!-- Separation of Concerns: Data config first, then main application logic -->
+  <script src="js/site-data.js?v=7"></script>
+  <script src="js/main.js?v=7"></script>
+  <script>
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
