@@ -273,6 +273,18 @@ const SITE_CONFIG = {
       accentColor: "#10b981",
       spotifyUri: "spotify:episode:7IPwO6qlV2qDIHFxOfUk9H",
       externalUrl: "https://open.spotify.com/episode/7IPwO6qlV2qDIHFxOfUk9H"
+    },
+    {
+      id: "podcast-tingjian-nideai",
+      title: "第1集",
+      show: "听见你的爱",
+      year: "2025",
+      role: "Audio Engineer · Dialogue Editor",
+      coverImage: "assets/img/podcasts/tingjian-nideai.jpg",
+      badge: "Audio Drama",
+      accentColor: "#e11d48",
+      spotifyUri: "spotify:episode:3Ax3eLwc6wq8YLgFe3IXZV",
+      externalUrl: "https://open.spotify.com/episode/3Ax3eLwc6wq8YLgFe3IXZV"
     }
   ],
 
