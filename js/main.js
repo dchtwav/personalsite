@@ -10,6 +10,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   initTheme();
+  initMobileNav();
   hydrateProfile();
   renderPodcasts();
   renderMusicals();
@@ -22,6 +23,48 @@ document.addEventListener('DOMContentLoaded', () => {
   attachYouTubeControllers();
   attachSpotifyAudioControllers();
 });
+
+/**
+ * 0. Mobile Navigation Drawer Toggle
+ */
+function initMobileNav() {
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  const mainNav = document.getElementById('main-nav-menu');
+  if (!menuBtn || !mainNav) return;
+
+  // Toggle drawer open / close
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isExpanded = menuBtn.getAttribute('aria-expanded') === 'true';
+    menuBtn.setAttribute('aria-expanded', !isExpanded);
+    mainNav.classList.toggle('is-open', !isExpanded);
+  });
+
+  // Close drawer when any nav link is clicked
+  mainNav.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      menuBtn.setAttribute('aria-expanded', 'false');
+      mainNav.classList.remove('is-open');
+    });
+  });
+
+  // Close drawer when tapping outside
+  document.addEventListener('click', (e) => {
+    if (!mainNav.contains(e.target) && !menuBtn.contains(e.target)) {
+      menuBtn.setAttribute('aria-expanded', 'false');
+      mainNav.classList.remove('is-open');
+    }
+  });
+
+  // Close drawer on Escape key for accessibility
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mainNav.classList.contains('is-open')) {
+      menuBtn.setAttribute('aria-expanded', 'false');
+      mainNav.classList.remove('is-open');
+      menuBtn.focus();
+    }
+  });
+}
 
 /**
  * 1. Dark / Light Theme Toggle Management

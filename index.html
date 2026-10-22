@@ -21,7 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css?v=8" />
+  <link rel="stylesheet" href="css/style.css?v=9" />
 
   <!-- Official SoundCloud Widget API (for in-page audio playback) -->
   <script src="https://w.soundcloud.com/player/api.js"></script>
@@ -30,13 +30,14 @@
 
   <!-- Top Sticky Navigation Bar (Mobile Friendly) -->
   <header class="site-nav" role="banner">
-    <div class="container">
+    <div class="container site-nav-container">
       <a href="#" class="brand" id="brand-link" aria-label="Home">
         <span class="brand-dot"></span>
         <span id="brand-name">David Chew</span>
       </a>
 
-      <nav aria-label="Main Navigation">
+      <!-- Desktop Navigation Menu (collapses to drawer on mobile) -->
+      <nav id="main-nav-menu" class="main-nav" aria-label="Main Navigation">
         <ul class="nav-links">
           <li><a href="#podcasts" class="nav-link">Podcasts</a></li>
           <li><a href="#musicals" class="nav-link">Musicals</a></li>
@@ -44,13 +45,21 @@
           <li><a href="#games" class="nav-link">Games</a></li>
           <li><a href="#about" class="nav-link">About</a></li>
           <li><a href="#contact" class="nav-link">Contact</a></li>
-          <li>
-            <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Toggle theme">
-              ☀️ Light
-            </button>
-          </li>
         </ul>
       </nav>
+
+      <!-- Right Actions: Theme Toggle + Mobile Hamburger Button -->
+      <div class="nav-actions">
+        <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Toggle theme">
+          ☀️ Light
+        </button>
+
+        <button id="mobile-menu-btn" class="mobile-menu-btn" type="button" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="main-nav-menu">
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+        </button>
+      </div>
     </div>
   </header>
 
