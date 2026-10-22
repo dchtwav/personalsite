@@ -21,7 +21,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <!-- Main Stylesheet -->
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=8" />
 
   <!-- Official SoundCloud Widget API (for in-page audio playback) -->
   <script src="https://w.soundcloud.com/player/api.js"></script>
@@ -57,20 +57,17 @@
   <!-- Main Content Landmark -->
   <main id="main-content">
     
-    <!-- Hero / Headline Section (Inspiration: fabiomonzani.com + Original Console Background) -->
-    <section class="hero-section" aria-labelledby="hero-title">
-      <div class="container">
-        
-        <!-- Hero Interactive Media Banner with Original Mixing Console Artwork -->
-        <div class="hero-banner">
-          <img src="assets/img/hero-console-bg.jpg" alt="Audio mixing console desk" class="hero-bg-img" />
-          <div class="hero-banner-inner">
+    <!-- Hero / Headline Section (Full-bleed edge-to-edge console banner) -->
+    <section class="hero-section hero-section-fullbleed" aria-labelledby="hero-title">
+      <div class="hero-banner">
+        <img src="assets/img/hero-console-bg.jpg" alt="Audio mixing console desk" class="hero-bg-img" />
+        <div class="hero-banner-inner">
+          <div class="container hero-banner-container">
             <span class="hero-status-pill">● Available for Projects & Scoring</span>
             <h1 class="hero-banner-title">Sound Design · Audio Engineering</h1>
             <p class="hero-banner-sub">VR Games · Podcasts · Live Orchestral Captures · Musical Theatre</p>
           </div>
         </div>
-
       </div>
     </section>
 
@@ -185,9 +182,61 @@
       </div>
     </div>
   </footer>
+
+  <!-- Floating Sticky Bottom Audio Player Bar (Spotify Dock Style) -->
+  <aside id="bottom-player-bar" class="bottom-player-bar" aria-label="Audio Playback Controller" aria-hidden="true">
+    <div class="bottom-player-content">
+      <div class="bottom-player-left">
+        <div class="bottom-player-thumb-wrapper">
+          <img id="bottom-player-art" src="" alt="Album Artwork" class="bottom-player-art" />
+        </div>
+        <div class="bottom-player-meta">
+          <div id="bottom-player-title" class="bottom-player-title">—</div>
+          <div id="bottom-player-subtitle" class="bottom-player-subtitle">—</div>
+        </div>
+      </div>
+
+      <div class="bottom-player-center">
+        <!-- Spotify Embed container -->
+        <div id="bottom-player-embed-container" class="bottom-player-embed-container"></div>
+        <!-- SoundCloud Embed container -->
+        <div id="bottom-player-sc-container" class="bottom-player-sc-container" style="display: none;"></div>
+      </div>
+
+      <div class="bottom-player-right">
+        <button id="bottom-player-close" class="bottom-player-close-btn" type="button" aria-label="Close player">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Floating Picture-in-Picture (PiP) Video Player (YouTube) -->
+  <aside id="pip-video-player" class="pip-video-player" aria-label="Floating Video Player" aria-hidden="true">
+    <div class="pip-video-header">
+      <div class="pip-video-info">
+        <span class="pip-video-badge">Now Playing</span>
+        <span id="pip-video-title" class="pip-video-title">—</span>
+      </div>
+      <button id="pip-video-close" class="pip-video-close-btn" type="button" aria-label="Close video player">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+        </svg>
+      </button>
+    </div>
+    <div class="pip-video-canvas">
+      <div id="pip-video-embed" class="pip-video-embed"></div>
+    </div>
+  </aside>
+
+  <!-- Official Spotify IFrame API (for programmatic playback) -->
+  <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+
   <!-- Separation of Concerns: Data config first, then main application logic -->
-  <script src="js/site-data.js?v=7"></script>
-  <script src="js/main.js?v=7"></script>
+  <script src="js/site-data.js?v=26"></script>
+  <script src="js/main.js?v=19"></script>
   <script>
     document.getElementById('current-year').textContent = new Date().getFullYear();
   </script>

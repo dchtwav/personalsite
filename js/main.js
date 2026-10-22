@@ -436,10 +436,24 @@ function renderPodcasts() {
     card.className = 'spotify-card';
     card.id = escapeHTML(item.id);
 
-    const hasSpotify = Boolean(item.spotifyUri);
+    const hasAudio = Boolean(item.soundcloudTrackId);
+    const hasSpotify = Boolean(item.spotifyUri) && !hasAudio;
     let actionHtml = '';
 
-    if (hasSpotify) {
+    if (hasAudio) {
+      actionHtml = `
+        <div class="spotify-play-btn-wrapper">
+          <button type="button" class="spotify-play-btn js-audio-play-btn" data-card-id="${escapeHTML(item.id)}" aria-label="Play ${escapeHTML(item.title)} directly">
+            <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor" width="22" height="22" style="display: none;">
+              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+            </svg>
+          </button>
+        </div>
+      `;
+    } else if (hasSpotify) {
       actionHtml = `
         <div class="spotify-play-btn-wrapper">
           <button 
@@ -470,15 +484,35 @@ function renderPodcasts() {
       `;
     }
 
+    const secretParam = item.soundcloudSecret ? `&secret_token=${encodeURIComponent(item.soundcloudSecret)}` : '';
+    const hiddenPlayerHtml = hasAudio ? `
+      <iframe 
+        id="sc-player-${escapeHTML(item.id)}"
+        class="hidden-audio-frame"
+        width="100%" 
+        height="100" 
+        scrolling="no" 
+        frameborder="no" 
+        allow="autoplay" 
+        src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/${item.soundcloudTrackId}${secretParam}&auto_play=false">
+      </iframe>
+    ` : '';
+
+    // Inline Spotify embed player overlay container (opens over card artwork on play)
+    const spotifyPlayerHtml = hasSpotify ? `
+      <div id="spotify-player-${escapeHTML(item.id)}" class="spotify-inline-player" style="display:none;" aria-hidden="true"></div>
+    ` : '';
+
     card.innerHTML = `
       <div class="spotify-thumb-wrapper">
         <img src="${escapeHTML(item.coverImage)}" alt="${escapeHTML(item.title)} cover" class="spotify-cover-img" loading="lazy" />
         <span class="spotify-badge" style="--badge-accent: ${escapeHTML(item.accentColor || '#10b981')}">${escapeHTML(item.badge || item.year)}</span>
         ${actionHtml}
+        ${hiddenPlayerHtml}
+        ${spotifyPlayerHtml}
       </div>
       <div class="spotify-card-meta">
-        <h3 class="spotify-card-title">${escapeHTML(item.title)}</h3>
-        <p class="spotify-card-company">${escapeHTML(item.show)}</p>
+        <h3 class="spotify-card-title">${escapeHTML(item.show || item.title)}</h3>
         <p class="spotify-card-year">${escapeHTML(item.year)}</p>
         <p class="spotify-card-role">${escapeHTML(item.role)}</p>
       </div>
@@ -605,26 +639,305 @@ function renderRecordings() {
   });
 }
 
+let activeSpotifyCardId = null;
+let spotifyEmbedController = null;
+let spotifyApiReady = false;
+let queuedSpotifyUri = null;
+
+// Global callback for official Spotify IFrame API
+window.onSpotifyIframeApiReady = (IFrameAPI) => {
+  spotifyApiReady = true;
+  const embedContainer = document.getElementById('bottom-player-embed-container');
+  if (!embedContainer) return;
+
+  const element = document.createElement('div');
+  element.id = 'spotify-api-embed-target';
+  embedContainer.appendChild(element);
+
+  const defaultUri = queuedSpotifyUri || 'spotify:episode:6dg5bkKWgZ6InAym2lKAqq';
+
+  const options = {
+    width: '100%',
+    height: 80,
+    uri: defaultUri
+  };
+
+  const callback = (EmbedController) => {
+    spotifyEmbedController = EmbedController;
+
+    // Optional: listen to playback status updates
+    spotifyEmbedController.addListener('playback_update', e => {
+      if (e && e.data) {
+        const isPaused = e.data.isPaused;
+        if (activeSpotifyCardId) {
+          const activeCard = document.getElementById(activeSpotifyCardId);
+          const activeBtn = activeCard ? activeCard.querySelector('.js-spotify-play-btn') : null;
+          if (activeBtn) setButtonPlaying(activeBtn, activeCard, !isPaused);
+        }
+      }
+    });
+
+    // If an episode was clicked before the controller was ready, play it now
+    if (queuedSpotifyUri) {
+      spotifyEmbedController.loadUri(queuedSpotifyUri);
+      try { spotifyEmbedController.play(); } catch (err) {}
+      queuedSpotifyUri = null;
+    }
+  };
+
+  IFrameAPI.createController(element, options, callback);
+};
+
+function stopActiveSpotify() {
+  if (!activeSpotifyCardId) return;
+  const prevCard = document.getElementById(activeSpotifyCardId);
+  const prevBtn = prevCard ? prevCard.querySelector('.js-spotify-play-btn') : null;
+  if (prevBtn) setButtonPlaying(prevBtn, prevCard, false);
+  if (spotifyEmbedController) {
+    try { spotifyEmbedController.pause(); } catch (err) {}
+  }
+  activeSpotifyCardId = null;
+  hideBottomPlayer();
+}
+
+function showBottomPlayer(item, spotifyUri, episodeId) {
+  const bar = document.getElementById('bottom-player-bar');
+  const art = document.getElementById('bottom-player-art');
+  const title = document.getElementById('bottom-player-title');
+  const subtitle = document.getElementById('bottom-player-subtitle');
+  const spotifyContainer = document.getElementById('bottom-player-embed-container');
+  const scContainer = document.getElementById('bottom-player-sc-container');
+  if (!bar) return;
+
+  if (art) {
+    art.src = item.coverImage || '';
+    art.alt = item.title || 'Cover Artwork';
+  }
+  // For podcasts, display show name as headline and genre badge as subtitle
+  if (item.show) {
+    if (title) title.textContent = item.show;
+    if (subtitle) subtitle.textContent = item.badge || 'Podcast';
+  } else {
+    if (title) title.textContent = item.title || '';
+    const metaSubtitle = item.company || item.ensemble || '';
+    if (subtitle) subtitle.textContent = (metaSubtitle ? `${metaSubtitle} · ` : '') + (item.badge || 'Audio');
+  }
+
+  // Switch to Spotify mode
+  if (spotifyContainer) spotifyContainer.style.display = 'flex';
+  if (scContainer) {
+    scContainer.style.display = 'none';
+    scContainer.innerHTML = '';
+  }
+
+  bar.classList.add('is-visible');
+  bar.setAttribute('aria-hidden', 'false');
+
+  if (spotifyEmbedController) {
+    // Dynamically load clicked episode and command programmatic playback
+    spotifyEmbedController.loadUri(spotifyUri);
+    try {
+      spotifyEmbedController.play();
+    } catch (err) {
+      console.warn('Spotify autoplay blocked or pending user interaction:', err);
+    }
+  } else {
+    // API still initializing: queue URI and render fallback iframe
+    queuedSpotifyUri = spotifyUri;
+    if (spotifyContainer && !document.getElementById('spotify-api-embed-target')) {
+      spotifyContainer.innerHTML = `<iframe
+        src="https://open.spotify.com/embed/episode/${episodeId}?utm_source=generator&theme=0"
+        width="100%"
+        height="100%"
+        frameborder="0"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+        loading="lazy"
+        title="${escapeHTML(item.title)} Spotify Player"
+      ></iframe>`;
+    }
+  }
+}
+
+function showBottomPlayerSoundCloud(item) {
+  const bar = document.getElementById('bottom-player-bar');
+  const art = document.getElementById('bottom-player-art');
+  const title = document.getElementById('bottom-player-title');
+  const subtitle = document.getElementById('bottom-player-subtitle');
+  const spotifyContainer = document.getElementById('bottom-player-embed-container');
+  const scContainer = document.getElementById('bottom-player-sc-container');
+  if (!bar || !scContainer) return;
+
+  if (art) {
+    art.src = item.coverImage || '';
+    art.alt = item.title || 'Track Artwork';
+  }
+  // For podcasts, display show name as headline and genre badge as subtitle
+  if (item.show) {
+    if (title) title.textContent = item.show;
+    if (subtitle) subtitle.textContent = item.badge || 'Podcast';
+  } else {
+    if (title) title.textContent = item.title || '';
+    const metaSubtitle = item.company || item.ensemble || '';
+    if (subtitle) subtitle.textContent = (metaSubtitle ? `${metaSubtitle} · ` : '') + (item.badge || 'Audio');
+  }
+
+  // Switch to SoundCloud mode
+  if (spotifyContainer) spotifyContainer.style.display = 'none';
+  scContainer.style.display = 'flex';
+
+  const secretParam = item.soundcloudSecret ? `%3Fsecret_token%3D${encodeURIComponent(item.soundcloudSecret)}` : '';
+  scContainer.innerHTML = `<iframe
+    id="bottom-sc-iframe"
+    width="100%"
+    height="100%"
+    scrolling="no"
+    frameborder="no"
+    allow="autoplay"
+    src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/${item.soundcloudTrackId}${secretParam}&color=%231ed760&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false">
+  </iframe>`;
+
+  bar.classList.add('is-visible');
+  bar.setAttribute('aria-hidden', 'false');
+
+  // Hook into bottom SoundCloud widget to sync pause/play events
+  const bottomIframe = document.getElementById('bottom-sc-iframe');
+  if (bottomIframe && typeof window.SC !== 'undefined') {
+    const bottomWidget = window.SC.Widget(bottomIframe);
+    activeAudioWidget = bottomWidget;
+
+    bottomWidget.bind(window.SC.Widget.Events.PLAY, () => {
+      if (activePlayingCardId) {
+        const card = document.getElementById(activePlayingCardId);
+        const btn = card ? card.querySelector('.js-audio-play-btn') : null;
+        if (btn) setButtonPlaying(btn, card, true);
+      }
+    });
+
+    bottomWidget.bind(window.SC.Widget.Events.PAUSE, () => {
+      if (activePlayingCardId) {
+        const card = document.getElementById(activePlayingCardId);
+        const btn = card ? card.querySelector('.js-audio-play-btn') : null;
+        if (btn) setButtonPlaying(btn, card, false);
+      }
+    });
+
+    bottomWidget.bind(window.SC.Widget.Events.FINISH, () => {
+      if (activePlayingCardId) {
+        const card = document.getElementById(activePlayingCardId);
+        const btn = card ? card.querySelector('.js-audio-play-btn') : null;
+        if (btn) setButtonPlaying(btn, card, false);
+      }
+      activePlayingCardId = null;
+    });
+  }
+}
+
+function hideBottomPlayer() {
+  const bar = document.getElementById('bottom-player-bar');
+  const scContainer = document.getElementById('bottom-player-sc-container');
+  if (!bar) return;
+  bar.classList.remove('is-visible');
+  bar.setAttribute('aria-hidden', 'true');
+  if (scContainer) {
+    scContainer.innerHTML = '';
+    scContainer.style.display = 'none';
+  }
+}
+
+function initBottomPlayer() {
+  const closeBtn = document.getElementById('bottom-player-close');
+  if (closeBtn && !closeBtn.dataset.bound) {
+    closeBtn.dataset.bound = 'true';
+    closeBtn.addEventListener('click', () => {
+      stopActiveSpotify();
+      stopActiveSoundCloud();
+    });
+  }
+}
+
+function stopActiveSoundCloud() {
+  if (activeAudioWidget) {
+    try { activeAudioWidget.pause(); } catch (err) {}
+  }
+  if (activePlayingCardId) {
+    const prevCard = document.getElementById(activePlayingCardId);
+    const prevBtn = prevCard ? prevCard.querySelector('.js-audio-play-btn') : null;
+    if (prevBtn) setButtonPlaying(prevBtn, prevCard, false);
+  }
+  activeAudioWidget = null;
+  activePlayingCardId = null;
+  hideBottomPlayer();
+}
+
+function findMediaItemById(id) {
+  if (typeof SITE_CONFIG === 'undefined') return null;
+  const pools = [
+    SITE_CONFIG.podcastEpisodes,
+    SITE_CONFIG.musicalProductions,
+    SITE_CONFIG.acousticRecordings,
+    SITE_CONFIG.games
+  ];
+  for (const list of pools) {
+    if (Array.isArray(list)) {
+      const found = list.find(x => x.id === id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
 function attachSpotifyAudioControllers() {
+  initBottomPlayer();
   const playBtns = document.querySelectorAll('.js-spotify-play-btn');
 
   playBtns.forEach(btn => {
+    if (btn.dataset.spotifyBound === 'true') return;
+    btn.dataset.spotifyBound = 'true';
+
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
 
-      const ext = btn.getAttribute('data-external-url');
-      if (ext) {
-        window.open(ext, '_blank', 'noopener,noreferrer');
+      const cardId = btn.getAttribute('data-card-id');
+      const spotifyUri = btn.getAttribute('data-spotify-uri');
+      const card = document.getElementById(cardId);
+
+      // Extract episode ID from uri (e.g. spotify:episode:6dg5bkKWgZ6InAym2lKAqq)
+      const episodeId = (spotifyUri || '').replace('spotify:episode:', '');
+
+      // If clicking currently active card -> toggle pause / close
+      if (activeSpotifyCardId === cardId) {
+        if (spotifyEmbedController) {
+          try { spotifyEmbedController.togglePlay(); } catch (err) {}
+        } else {
+          stopActiveSpotify();
+        }
+        return;
       }
+
+      // Stop any other active players across all types
+      stopActiveSpotify();
+      stopActiveSoundCloud();
+      stopActiveYouTube();
+
+      // Find item metadata in SITE_CONFIG
+      const item = findMediaItemById(cardId);
+
+      if (spotifyUri && item) {
+        showBottomPlayer(item, spotifyUri, episodeId);
+      }
+
+      activeSpotifyCardId = cardId;
+      setButtonPlaying(btn, card, true);
     });
   });
 }
 
 /**
- * Attaches SoundCloud Widget playback to the green Spotify play button
+ * Attaches SoundCloud Widget playback to the green play button and routes it to the floating bottom player bar
  */
 function attachInlineAudioControllers() {
+  initBottomPlayer();
   const playBtns = document.querySelectorAll('.js-audio-play-btn');
 
   playBtns.forEach(btn => {
@@ -636,81 +949,92 @@ function attachInlineAudioControllers() {
       e.stopPropagation();
 
       const cardId = btn.getAttribute('data-card-id');
-      const iframe = document.getElementById(`sc-player-${cardId}`);
-      if (!iframe || typeof window.SC === 'undefined') return;
-
-      const widget = window.SC.Widget(iframe);
-      const iconPlay = btn.querySelector('.icon-play');
-      const iconPause = btn.querySelector('.icon-pause');
       const card = document.getElementById(cardId);
 
       // If clicking already playing track -> toggle pause
       if (activePlayingCardId === cardId && activeAudioWidget) {
-        widget.isPaused((paused) => {
+        activeAudioWidget.isPaused((paused) => {
           if (paused) {
-            widget.play();
+            activeAudioWidget.play();
             setButtonPlaying(btn, card, true);
-            updateBottomPlayerPlayState(true);
           } else {
-            widget.pause();
+            activeAudioWidget.pause();
             setButtonPlaying(btn, card, false);
-            updateBottomPlayerPlayState(false);
           }
         });
         return;
       }
 
       // If switching to a new track, pause any previously playing track
-      if (activeAudioWidget && activePlayingCardId !== cardId) {
-        activeAudioWidget.pause();
-        const prevCard = document.getElementById(activePlayingCardId);
-        const prevBtn = prevCard ? prevCard.querySelector('.js-audio-play-btn') : null;
-        if (prevBtn) setButtonPlaying(prevBtn, prevCard, false);
-      }
-
-      // Also stop any YouTube playback
+      stopActiveSpotify();
+      stopActiveSoundCloud();
       stopActiveYouTube();
 
-      // Start playing current widget
-      activeAudioWidget = widget;
-      activePlayingCardId = cardId;
-      widget.play();
-      setButtonPlaying(btn, card, true);
-
-      // Bind ended listener
-      widget.bind(window.SC.Widget.Events.FINISH, () => {
-        setButtonPlaying(btn, card, false);
-        activePlayingCardId = null;
-      });
+      const item = findMediaItemById(cardId);
+      if (item && item.soundcloudTrackId) {
+        activePlayingCardId = cardId;
+        setButtonPlaying(btn, card, true);
+        showBottomPlayerSoundCloud(item);
+      }
     });
   });
 }
 
-/**
- * Attaches YouTube inline video playback to the green play button
- * Pattern: clicking play swaps thumbnail area for an embedded YouTube iframe (autoplay).
- * Clicking again or playing another card removes the iframe and restores the thumbnail.
- */
 let activeYtCardId = null;
+
+function showPipVideo(item, ytId) {
+  const pip = document.getElementById('pip-video-player');
+  const title = document.getElementById('pip-video-title');
+  const embed = document.getElementById('pip-video-embed');
+  if (!pip || !embed) return;
+
+  if (title) title.textContent = item.title || 'Video Player';
+
+  embed.innerHTML = `<iframe
+    width="100%"
+    height="100%"
+    src="https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen
+    title="${escapeHTML(item.title)} Video Preview"
+  ></iframe>`;
+
+  pip.classList.add('is-visible');
+  pip.setAttribute('aria-hidden', 'false');
+}
+
+function hidePipVideo() {
+  const pip = document.getElementById('pip-video-player');
+  const embed = document.getElementById('pip-video-embed');
+  if (!pip) return;
+  pip.classList.remove('is-visible');
+  pip.setAttribute('aria-hidden', 'true');
+  if (embed) embed.innerHTML = '';
+}
+
+function initPipVideo() {
+  const closeBtn = document.getElementById('pip-video-close');
+  if (closeBtn && !closeBtn.dataset.bound) {
+    closeBtn.dataset.bound = 'true';
+    closeBtn.addEventListener('click', () => {
+      stopActiveYouTube();
+    });
+  }
+}
 
 function stopActiveYouTube() {
   if (!activeYtCardId) return;
-  const prevPlayer = document.getElementById(`yt-player-${activeYtCardId}`);
   const prevCard = document.getElementById(activeYtCardId);
   const prevBtn = prevCard ? prevCard.querySelector('.js-yt-play-btn') : null;
-  if (prevPlayer) {
-    prevPlayer.innerHTML = ''; // Remove iframe to stop video
-    prevPlayer.style.display = 'none';
-    const prevImg = prevCard ? prevCard.querySelector('.spotify-cover-img') : null;
-    const prevBadge = prevCard ? prevCard.querySelector('.spotify-badge') : null;
-    if (prevImg) prevImg.style.opacity = '1';
-    if (prevBadge) prevBadge.style.opacity = '1';
-  }
   if (prevBtn) setButtonPlaying(prevBtn, prevCard, false);
   activeYtCardId = null;
+  hidePipVideo();
 }
 
 function attachYouTubeControllers() {
+  initPipVideo();
   const playBtns = document.querySelectorAll('.js-yt-play-btn');
 
   playBtns.forEach(btn => {
@@ -724,51 +1048,24 @@ function attachYouTubeControllers() {
       const cardId = btn.getAttribute('data-card-id');
       const ytId = btn.getAttribute('data-yt-id');
       const card = document.getElementById(cardId);
-      const playerDiv = document.getElementById(`yt-player-${cardId}`);
-      const coverImg = card ? card.querySelector('.spotify-cover-img') : null;
-      const badge = card ? card.querySelector('.spotify-badge') : null;
 
-      // If clicking the currently active card — stop it
+      // If clicking the currently active video card — close/stop it
       if (activeYtCardId === cardId) {
         stopActiveYouTube();
         return;
       }
 
-      // Stop any currently playing YouTube card
+      // Stop any other media playing across Spotify, SoundCloud, or another YouTube video
+      stopActiveSpotify();
+      stopActiveSoundCloud();
       stopActiveYouTube();
 
-      // Also pause any SoundCloud widget
-      if (activeAudioWidget) {
-        try { activeAudioWidget.pause(); } catch (err) {}
-        if (activePlayingCardId) {
-          const prevSCCard = document.getElementById(activePlayingCardId);
-          const prevSCBtn = prevSCCard ? prevSCCard.querySelector('.js-audio-play-btn') : null;
-          if (prevSCBtn) setButtonPlaying(prevSCBtn, prevSCCard, false);
-        }
-        activeAudioWidget = null;
-        activePlayingCardId = null;
+      const item = findMediaItemById(cardId);
+      if (item && ytId) {
+        activeYtCardId = cardId;
+        setButtonPlaying(btn, card, true);
+        showPipVideo(item, ytId);
       }
-
-      // Inject YouTube iframe with autoplay
-      if (playerDiv && ytId) {
-        playerDiv.innerHTML = `<iframe
-          width="100%"
-          height="100%"
-          src="https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          referrerpolicy="strict-origin-when-cross-origin"
-          allowfullscreen
-          title="${btn.getAttribute('aria-label') || 'Video player'}"
-        ></iframe>`;
-        playerDiv.style.display = 'block';
-        // Fade out thumbnail and badge behind the player
-        if (coverImg) coverImg.style.opacity = '0';
-        if (badge) badge.style.opacity = '0';
-      }
-
-      activeYtCardId = cardId;
-      setButtonPlaying(btn, card, true);
     });
   });
 }
